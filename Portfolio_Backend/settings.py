@@ -1,49 +1,21 @@
 """
 Django settings for Portfolio_Backend project.
 """
+
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from google.cloud import secretmanager
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+ENV_FILE = os.getenv('ENV_FILE', BASE_DIR / 'Portfolio_Backend' / '.env')
+load_dotenv(dotenv_path=ENV_FILE)
 
+SECRET_KEY = os.getenv('SECRET_KEY', '')
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-def get_secret(secret_id):
-    environment = os.getenv('PORTFOLIO_ENVIRONMENT')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else []
 
-    if environment == 'local':
-        value = os.getenv(secret_id)
-        if value is None:
-            raise ValueError(f"Environment variable '{secret_id}' not found.")
-        return value
-    else:
-        client = secretmanager.SecretManagerServiceClient()
-        project_id = 'veysel-server-456622'
-        secret_path = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
-        try:
-            secret = client.access_secret_version(name=secret_path)
-            return secret.payload.data.decode("UTF-8")
-        except Exception as e:
-            raise ValueError(f"Error accessing secret '{secret_id}': {str(e)}")
-
-
-# Load the environment variables from the .env file
-if os.getenv('PORTFOLIO_ENVIRONMENT', 'local') == 'local':
-    load_dotenv()
-
-ENVIRONMENT = get_secret('PORTFOLIO_ENVIRONMENT')
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = get_secret('PORTFOLIO_SECRET_KEY')
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = get_secret('PORTFOLIO_DEBUG')
-
-ALLOWED_HOSTS = [host.strip() for host in get_secret('PORTFOLIO_ALLOWED_HOSTS').split(',')]
-
-CORS_ALLOWED_ORIGINS = [origin.strip() for origin in get_secret('PORTFOLIO_CORS_ALLOWED_ORIGINS').split(',')]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -73,8 +45,7 @@ ROOT_URLCONF = 'Portfolio_Backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -97,39 +68,26 @@ DATABASES = {
 }
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ORIGIN_ALLOW_ALL = False
-
-# Email settings
-EMAIL_BACKEND = get_secret('PORTFOLIO_EMAIL_BACKEND')
-EMAIL_HOST = get_secret('PORTFOLIO_EMAIL_HOST')
-EMAIL_PORT = get_secret('PORTFOLIO_EMAIL_PORT')
-EMAIL_USE_TLS = get_secret('PORTFOLIO_EMAIL_USE_TLS') == 'True'
-EMAIL_HOST_USER = get_secret('PORTFOLIO_EMAIL_HOST_USER')
-NOTIFY_EMAIL = get_secret('PORTFOLIO_NOTIFY_EMAIL')
-EMAIL_HOST_PASSWORD = get_secret('PORTFOLIO_EMAIL_HOST_PASSWORD')
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', '')
+EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_PORT = os.getenv('EMAIL_PORT', '')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+NOTIFY_EMAIL = os.getenv('NOTIFY_EMAIL', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
